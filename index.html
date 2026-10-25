@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Animasi LUTS dan BPH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,800;1,800&display=swap">
+</head>
+<body>
+
+<style>
+/* Layout: hero (teks + kartu ginjal) lalu satu panggung yang di-pin; video discrub oleh gulir, catatan bab di samping, rel bab di bawah. */
+:root {
+  --maroon: #712727;
+  --maroon-deep: #5c1f20;
+  --rose: #be6364;
+  --rose-soft: #c97377;
+  --crimson: #922c2b;
+  --blush: #fbe6e6;
+  --paper: #fffafa;
+  --ink: #fbe6e6;
+  --muted: #efc4c4;
+  --ureter: #dfab68;
+  --shadow: rgb(46 10 11 / .45);
+  --font: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body {
+  background: var(--maroon);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.gutter {
+  padding-left: max(24px, env(safe-area-inset-left, 0px));
+  padding-right: max(24px, env(safe-area-inset-right, 0px));
+}
+
+/* ---------- Latar ---------- */
+.kidney-bg {
+  position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 45%, transparent 55%, var(--maroon-deep) 100%), var(--maroon);
+}
+.kidney-bg svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.kidney-bg g { transform-box: view-box; }
+@media (prefers-reduced-motion: no-preference) {
+  .kidney-bg .drift-a { animation: kb-a 26s ease-in-out infinite alternate; }
+  .kidney-bg .drift-b { animation: kb-b 32s ease-in-out infinite alternate; }
+  .kidney-bg .drift-c { animation: kb-c 38s ease-in-out infinite alternate; }
+}
+@keyframes kb-a { to { transform: translate(-28px, 18px) rotate(-1.2deg); } }
+@keyframes kb-b { to { transform: translate(24px, -16px) rotate(1deg); } }
+@keyframes kb-c { to { transform: translate(-18px, -22px); } }
+
+/* ---------- Hero ---------- */
+.hero {
+  position: relative; z-index: 1;
+  min-height: 100dvh; box-sizing: border-box;
+  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+  align-items: center; gap: clamp(32px, 6vw, 96px);
+  max-width: 1240px; margin: 0 auto;
+  padding-block: clamp(40px, 8vh, 96px);
+}
+.copy { display: grid; gap: 22px; min-width: 0; max-width: 34rem; }
+.eyebrow { font-size: .78rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ureter); }
+h1, h2 { margin: 0; font-weight: 800; letter-spacing: -.025em; text-wrap: balance; }
+h1 { font-size: clamp(2.2rem, 4.2vw, 3.6rem); line-height: 1.08; }
+h1 em, h2 em { font-style: italic; color: var(--rose-soft); }
+.lede { margin: 0; font-size: clamp(1.02rem, 1.4vw, 1.15rem); color: var(--muted); max-width: 42ch; text-wrap: pretty; }
+.btn {
+  font: 600 .98rem/1 var(--font); min-height: 48px; padding: 0 24px;
+  border-radius: 999px; border: 1.5px solid var(--blush); cursor: pointer; white-space: nowrap;
+  background: var(--blush); color: var(--maroon);
+  transition: transform .14s var(--ease-out), background-color .2s ease;
+  justify-self: start;
+}
+.btn:active { transform: scale(.97); }
+.btn:focus-visible, .chap:focus-visible, .refs a:focus-visible { outline: 3px solid var(--ureter); outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) { .btn:hover { background: var(--paper); } }
+
+.figure { position: relative; justify-self: center; width: min(100%, 440px); margin: 0; }
+.card {
+  aspect-ratio: 439 / 502; max-width: 100%; box-sizing: border-box;
+  background: var(--blush); border: 17px solid var(--paper); border-radius: 44px;
+  box-shadow: 0 30px 60px -20px var(--shadow), 0 8px 18px -8px var(--shadow);
+  display: grid; place-items: center; overflow: hidden;
+}
+.card img { width: 82%; height: auto; display: block; }
+.pulse { position: absolute; right: -9%; bottom: -3%; width: 30%; aspect-ratio: 1; filter: drop-shadow(0 10px 14px var(--shadow)); }
+.pulse svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.pulse .heart { fill: var(--rose-soft); }
+.pulse .trace { fill: none; stroke: var(--paper); stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
+.pulse .dot { fill: var(--paper); }
+@media (prefers-reduced-motion: no-preference) {
+  .pulse svg { animation: beat 2.6s 1.2s ease-in-out infinite; transform-origin: 50% 60%; }
+  .pulse .trace { stroke-dasharray: 40; stroke-dashoffset: 40; animation: trace 2.6s 1.2s ease-out infinite; }
+}
+@keyframes beat { 0%, 60%, 100% { transform: scale(1); } 8% { transform: scale(1.07); } 16% { transform: scale(.99); } 24% { transform: scale(1.04); } }
+@keyframes trace { 0% { stroke-dashoffset: 40; } 35%, 100% { stroke-dashoffset: 0; } }
+
+/* ---------- Panggung video (di-pin oleh ScrollTrigger) ---------- */
+.film { position: relative; z-index: 1; height: 100dvh; box-sizing: border-box; }
+.film-inner {
+  height: 100%; box-sizing: border-box; max-width: 1440px; margin: 0 auto;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 20px clamp(20px, 3vw, 40px); align-items: center;
+  padding-block: clamp(16px, 4vh, 40px);
+}
+.screen {
+  position: relative; width: 100%; max-width: calc((100dvh - 170px) * 16 / 9); justify-self: center;
+  aspect-ratio: 16 / 9; box-sizing: border-box; background: #fff;
+  border: 10px solid var(--paper); border-radius: 26px; overflow: hidden;
+  box-shadow: 0 34px 70px -24px var(--shadow), 0 10px 20px -10px var(--shadow);
+}
+.screen video, .screen .poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; background: #fff; }
+.screen video { opacity: 0; }
+.screen video.on { opacity: 1; }
+.loading {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+  display: grid; gap: 8px; justify-items: center; width: min(78%, 320px);
+  padding: 12px 18px; border-radius: 16px; background: rgb(113 39 39 / .92); color: var(--blush);
+  font-size: .88rem; font-weight: 600; font-variant-numeric: tabular-nums; text-align: center;
+}
+.loading .bar { width: 100%; height: 4px; border-radius: 4px; background: rgb(251 230 230 / .25); overflow: hidden; }
+.loading .bar i { display: block; height: 100%; width: 100%; background: var(--ureter); transform-origin: left; transform: scaleX(0); }
+.loading.error { background: var(--crimson); }
+
+.notes { display: grid; gap: 14px; align-content: center; min-width: 0; }
+.captions { display: grid; }
+.cap { grid-area: 1 / 1; display: grid; gap: 10px; align-content: start; }
+.cap h3 { margin: 0; font-size: clamp(1.4rem, 2.2vw, 1.9rem); font-weight: 800; line-height: 1.12; letter-spacing: -.02em; text-wrap: balance; }
+.cap p { margin: 0; color: var(--muted); font-size: 1rem; text-wrap: pretty; }
+
+.rail { grid-column: 1 / -1; display: grid; gap: 10px; }
+.rail-track { position: relative; display: flex; gap: 4px; height: 34px; align-items: stretch; }
+.chap {
+  position: relative; flex: var(--w) 1 0; min-width: 0; border: 0; padding: 0; cursor: pointer;
+  background: transparent; display: flex; align-items: center;
+}
+.chap::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 6px; margin-top: -3px; border-radius: 6px; background: rgb(251 230 230 / .22); transition: background-color .2s ease; }
+.chap .fill { position: absolute; left: 0; right: 0; top: 50%; height: 6px; margin-top: -3px; border-radius: 6px; background: var(--blush); transform-origin: left; transform: scaleX(0); }
+.chap.active::before { background: rgb(251 230 230 / .34); }
+@media (hover: hover) and (pointer: fine) { .chap:hover::before { background: rgb(251 230 230 / .4); } }
+.rail-labels { display: flex; gap: 4px; font-size: .74rem; font-weight: 600; color: var(--muted); }
+.rail-labels span { flex: var(--w) 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rail-labels span.active { color: var(--blush); }
+
+/* ---------- Mindmap: simpul inti di tengah, 4 cabang kiri-kanan, garis SVG dari inti ke tiap cabang ---------- */
+.mindmap { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding-block: clamp(80px, 14vh, 140px) 0; display: grid; gap: 36px; }
+.mindmap h2 { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.08; }
+.mind {
+  position: relative; display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px minmax(0, 1fr);
+  grid-template-rows: auto auto; gap: 40px 64px; align-items: start;
+}
+.mind-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 0; }
+.mind-lines path { fill: none; stroke: var(--rose-soft); stroke-width: 2; stroke-linecap: round; opacity: .8; }
+.core {
+  grid-column: 2; grid-row: 1 / span 2; align-self: center; position: relative; z-index: 1;
+  display: grid; gap: 6px; text-align: center; padding: 22px 16px;
+  background: var(--blush); color: var(--maroon); border: 8px solid var(--paper); border-radius: 28px;
+  box-shadow: 0 24px 50px -20px var(--shadow);
+}
+.core strong { font-size: 2.3rem; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+.core span { font-size: .84rem; font-weight: 600; line-height: 1.4; }
+.branch {
+  position: relative; z-index: 1; min-width: 0; display: grid; gap: 14px; align-content: start;
+  padding: 22px clamp(18px, 2vw, 26px); border-radius: 24px;
+  background: rgb(80 26 27 / .78); border: 1.5px solid rgb(251 230 230 / .22);
+  box-shadow: 0 20px 40px -24px var(--shadow);
+}
+.b-def { grid-column: 1; grid-row: 1; }
+.b-epi { grid-column: 3; grid-row: 1; }
+.b-eti { grid-column: 1; grid-row: 2; }
+.b-fr  { grid-column: 3; grid-row: 2; }
+.branch h3 { margin: 0; font-size: 1.45rem; font-weight: 800; letter-spacing: -.02em; color: var(--blush); }
+.leaf { display: grid; gap: 6px; }
+.leaf h4 { margin: 0; font-size: .86rem; font-weight: 700; color: var(--ureter); letter-spacing: .02em; }
+.leaf ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.leaf li { position: relative; padding-left: 16px; font-size: .92rem; line-height: 1.5; color: var(--muted); text-wrap: pretty; }
+.leaf li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 6px; height: 6px; border-radius: 50%; background: var(--rose-soft); }
+.leaf.case { padding: 12px 14px; border-radius: 16px; background: rgb(251 230 230 / .08); border: 1px dashed rgb(251 230 230 / .3); }
+.leaf.case li { color: var(--ink); }
+@media (max-width: 860px) {
+  .mind { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; gap: 20px; padding-left: 22px; }
+  .mind::before { content: ""; position: absolute; left: 6px; top: 40px; bottom: 40px; width: 2px; background: var(--rose-soft); opacity: .7; }
+  .mind-lines { display: none; }
+  .core { grid-column: auto; grid-row: auto; margin-left: -22px; }
+  .b-def, .b-epi, .b-eti, .b-fr { grid-column: auto; grid-row: auto; }
+  .branch::before { content: ""; position: absolute; left: -16px; top: 34px; width: 16px; height: 2px; background: var(--rose-soft); opacity: .7; }
+}
+
+/* ---------- Penutup ---------- */
+.outro { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding-block: clamp(80px, 14vh, 140px); display: grid; gap: 28px; }
+.outro h2 { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.08; }
+.refs { list-style: none; margin: 0; padding: 0; counter-reset: ref; display: grid; gap: 14px; max-width: 82ch; }
+.refs li { counter-increment: ref; display: grid; grid-template-columns: 2.2em minmax(0, 1fr); gap: 6px; color: var(--muted); font-size: .95rem; line-height: 1.6; overflow-wrap: anywhere; }
+.refs li::before { content: counter(ref) "."; color: var(--ureter); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; padding-right: 4px; }
+.refs a { color: var(--blush); text-decoration: underline; text-underline-offset: 2px; }
+
+@media (max-width: 860px) {
+  .gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .hero { grid-template-columns: minmax(0, 1fr); align-content: center; gap: 40px; }
+  .figure { width: min(72%, 300px); order: -1; }
+  .card { border-width: 12px; border-radius: 32px; }
+  .copy { max-width: none; }
+  .film-inner { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; align-content: center; gap: 18px; }
+  .screen { max-width: 100%; border-width: 6px; border-radius: 16px; }
+  .rail-labels { display: none; }
+}
+</style>
+
+<div class="kidney-bg" aria-hidden="true">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <g class="drift-c"><path fill="#c97377" opacity=".28" d="M640 -80C760 120 980 210 1180 330C1300 400 1390 470 1520 500L1520 600C1360 560 1220 480 1080 400C880 290 700 170 560 -80Z"/></g>
+    <g class="drift-a">
+      <path fill="#be6364" d="M900 -80C1000 110 1170 210 1520 250L1520 -80Z"/>
+      <path fill="#922c2b" d="M1110 -80C1180 40 1300 110 1520 130L1520 82C1340 74 1240 24 1188 -80Z"/>
+      <path fill="#922c2b" opacity=".75" d="M1000 -80C1040 -10 1090 34 1150 64C1120 30 1086 -20 1060 -80Z"/>
+    </g>
+    <g class="drift-b">
+      <path fill="#be6364" d="M-80 560C110 630 260 760 420 980L-80 980Z"/>
+      <path fill="#922c2b" d="M-80 700C50 750 150 840 236 980L170 980C110 880 30 810 -80 772Z"/>
+      <path fill="#922c2b" opacity=".8" d="M-80 610C20 640 90 676 148 724C80 702 10 684 -80 676Z"/>
+      <path fill="#922c2b" opacity=".85" d="M262 860C300 890 330 930 352 980L314 980C300 940 284 900 262 860Z"/>
+    </g>
+    <g class="drift-a">
+      <path fill="#be6364" opacity=".9" d="M1060 980C1150 840 1290 770 1520 740L1520 980Z"/>
+      <path fill="#922c2b" opacity=".85" d="M1250 980C1300 900 1380 850 1520 830L1520 870C1420 890 1350 930 1310 980Z"/>
+    </g>
+  </svg>
+</div>
+
+<header class="hero gutter">
+  <div class="copy">
+    <h1>Definisi, Epidemiologi, Etiologi dan Faktor risiko <em>(LUTS)</em></h1>
+  </div>
+  <figure class="figure">
+    <div class="card"><img src="data:image/webp;base64,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" width="720" height="650" alt="Ilustrasi sepasang ginjal dengan ureter"></div>
+    <div class="pulse" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path class="heart" d="M12 21.3s-7.6-4.6-10.1-9.4C.2 8.6 1.9 4.6 5.6 4.2 8 3.9 10 5.3 12 7.7c2-2.4 4-3.8 6.4-3.5 3.7.4 5.4 4.4 3.7 7.7-2.5 4.8-10.1 9.4-10.1 9.4z"/>
+        <polyline class="trace" points="3.4 13.2 8.1 13.2 9.7 10.4 11.6 16 14 8.4 15.8 13.2 23.2 13.2"/>
+        <circle class="dot" cx="3.4" cy="13.2" r=".85"/>
+      </svg>
+    </div>
+  </figure>
+</header>
+
+<section class="film" id="film" aria-label="Animasi LUTS dan BPH">
+  <div class="film-inner gutter">
+    <div class="screen" id="screen">
+      <img class="poster" src="video/poster.jpg" alt="" width="1280" height="720">
+      <video muted playsinline preload="none" aria-label="Animasi LUTS dan BPH bagian 1"></video>
+      <video muted playsinline preload="none" aria-label="Animasi LUTS dan BPH bagian 2"></video>
+      <video muted playsinline preload="none" aria-label="Animasi LUTS dan BPH bagian 3"></video>
+      <div class="loading" id="loading" role="status" aria-live="polite">
+        <span id="loadText">Memuat video 0%</span>
+        <span class="bar"><i id="loadBar"></i></span>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="captions" id="captions"></div>
+    </div>
+
+    <nav class="rail" aria-label="Lompat ke bab">
+      <div class="rail-track" id="railTrack"></div>
+      <div class="rail-labels" id="railLabels" aria-hidden="true"></div>
+    </nav>
+  </div>
+</section>
+
+<section class="mindmap gutter" aria-labelledby="mindTitle">
+  <h2 id="mindTitle">Mindmap <em>LUTS</em></h2>
+  <div class="mind" id="mind">
+    <svg class="mind-lines" id="mindLines" aria-hidden="true"></svg>
+
+    <div class="core" id="mindCore">
+      <strong>LUTS</strong>
+      <span>Pemicu 3: laki-laki 71 tahun, IPSS 22</span>
+    </div>
+
+    <article class="branch b-def">
+      <h3>Definisi</h3>
+      <div class="leaf"><h4>Inti</h4><ul>
+        <li>Kumpulan gejala saluran kemih bawah. Bukan diagnosis.</li>
+        <li>Asal: buli, leher buli, prostat, uretra, dasar panggul.</li>
+        <li>Laki-laki dan perempuan bisa kena. Pola beda.</li>
+      </ul></div>
+      <div class="leaf"><h4>3 kelompok (fase berkemih, bukan penyebab)</h4><ul>
+        <li>Storage: frekuensi, nokturia, urgensi, inkontinensia.</li>
+        <li>Voiding: pancaran lemah atau bercabang, intermitensi, hesitansi, mengejan, menetes di akhir.</li>
+        <li>Pascamiksi: rasa tidak tuntas, menetes setelah berkemih.</li>
+        <li>Voiding tidak selalu obstruksi. Detrusor underaktif tiru gejala sama.</li>
+      </ul></div>
+      <div class="leaf"><h4>Nokturia</h4><ul>
+        <li>Bangun 1 kali atau lebih malam untuk berkemih.</li>
+        <li>Risiko jatuh, fraktur, gangguan kognitif, suasana hati turun.</li>
+        <li>4 mekanisme: urin malam naik, kapasitas tampung turun, kosong tidak tuntas, gangguan tidur primer.</li>
+        <li>Bladder diary minimal 3 hari. Hitung indeks poliuria nokturnal.</li>
+      </ul></div>
+      <div class="leaf"><h4>IPSS</h4><ul>
+        <li>8 butir: 7 gejala, 1 kualitas hidup.</li>
+        <li>0 asimtomatik. 1-7 ringan. 8-19 sedang. 20-35 berat.</li>
+        <li>Tidak nilai inkontinensia, pascamiksi, gangguan per gejala.</li>
+      </ul></div>
+      <div class="leaf"><h4>Istilah</h4><ul>
+        <li>BPH: pola histologis.</li>
+        <li>BPE: prostat membesar.</li>
+        <li>BOO: obstruksi saat berkemih. Diagnosis lewat studi tekanan-aliran.</li>
+        <li>BPO: BOO akibat BPE.</li>
+      </ul></div>
+      <div class="leaf case"><h4>Pasien pemicu</h4><ul>
+        <li>IPSS 22 berat. Kualitas hidup 4, sangat terganggu.</li>
+        <li>LUTS berat arah BPO. Belum dibuktikan urodinamik.</li>
+      </ul></div>
+    </article>
+
+    <article class="branch b-epi">
+      <h3>Epidemiologi</h3>
+      <div class="leaf"><h4>Penuaan</h4><ul>
+        <li>LUTS erat dengan usia. Mayoritas laki-laki lansia minimal 1 gejala, sering ringan.</li>
+        <li>LUTS sedang-berat: risiko kardiovaskular mayor mungkin naik.</li>
+        <li>WHO: usia 60+ sekitar 1 miliar (2020), 1,4 miliar (2030), 2,1 miliar (2050).</li>
+      </ul></div>
+      <div class="leaf"><h4>LUTS</h4><ul>
+        <li>BEBIC, 1.477 dewasa: urgensi 59,9%, nokturia 50,6%.</li>
+        <li>Laki-laki lebih sering voiding dan pascamiksi (mengejan, intermitensi).</li>
+        <li>OAB global 20% (53 studi, 610.438 partisipan). Naik 18,1% ke 23,9% dalam 20 tahun.</li>
+      </ul></div>
+      <div class="leaf"><h4>BPH dunia (GBD 2019)</h4><ul>
+        <li>94,0 juta kasus 2019. Naik 70,5% dari 51,1 juta (2000).</li>
+        <li>Prevalensi terstandar usia 2.480/100.000, relatif stabil. Kasus naik karena populasi tumbuh dan menua.</li>
+        <li>Usia 60+: 79 juta kasus.</li>
+        <li>Sekitar 50% laki-laki di atas 50 tahun. Hingga 80% di atas 80 tahun.</li>
+        <li>Risiko seumur hidup dari usia 40: 27,3%.</li>
+      </ul></div>
+      <div class="leaf"><h4>Distribusi usia</h4><ul>
+        <li>Kasus terbanyak usia 65-69 dan 70-74 tahun.</li>
+        <li>Prevalensi puncak usia 75-79 tahun, sekitar 24.000/100.000.</li>
+        <li>Kasus baru terbanyak usia 50-70 tahun.</li>
+      </ul></div>
+      <div class="leaf"><h4>Indonesia</h4><ul>
+        <li>Prevalensi 3.518,73 hingga kurang dari 5.375,97/100.000. Di atas angka global.</li>
+        <li>Beban naik tercepat di negara pendapatan rendah dan menengah.</li>
+        <li>Kesadaran rendah. Pasien datang saat gejala sudah berat.</li>
+      </ul></div>
+      <div class="leaf case"><h4>Pasien pemicu</h4><ul>
+        <li>Usia 71 tahun. Kelompok kasus terbanyak.</li>
+        <li>Keluhan utama nokturia: gejala tersering di populasi.</li>
+      </ul></div>
+    </article>
+
+    <article class="branch b-eti">
+      <h3>Etiologi</h3>
+      <div class="leaf"><h4>Prinsip</h4><ul>
+        <li>Multifaktorial. Sering lebih dari 1 penyebab per pasien.</li>
+        <li>Dulu: BPH, BPE, BPO, lalu LUTS. Satu jalur prostat.</li>
+        <li>Kini: LUTS sering tidak berhubungan dengan prostat.</li>
+      </ul></div>
+      <div class="leaf"><h4>Kelompok penyebab</h4><ul>
+        <li>Prostat: BPO, inflamasi, karsinoma.</li>
+        <li>Saluran keluar: striktur uretra, kontraktur leher buli.</li>
+        <li>Detrusor: overaktif/OAB, underaktif (hingga 1/3 pasien BPH).</li>
+        <li>Lesi buli: ISK, batu, tumor.</li>
+        <li>Neurologis: stroke, Parkinson, medula spinalis, neuropati diabetik.</li>
+        <li>Nonurologis (nokturia): hipertensi, gagal jantung, PGK, PPOK, sindrom metabolik, DM.</li>
+        <li>Obat: tinjau, termasuk waktu minum diuretik.</li>
+      </ul></div>
+      <div class="leaf"><h4>Residu pascaberkemih</h4><ul>
+        <li>Residu tinggi tidak selalu BOO. Bisa obstruksi, detrusor lemah, atau keduanya.</li>
+        <li>Ambang 50 mL: nilai prediksi positif BOO hanya 63%.</li>
+      </ul></div>
+      <div class="leaf"><h4>Patogenesis BPH</h4><ul>
+        <li>Hanya di zona transisional, sekitar uretra.</li>
+        <li>Penuaan dan obesitas mendahului.</li>
+        <li>Faktor urin: kerusakan sel, inflamasi.</li>
+        <li>DHT (dari testosteron lewat 5-alfa reduktase) plus inflamasi kronik: proliferasi nodular stroma dan epitel. Estrogen ikut pada sebagian.</li>
+        <li>Obstruksi statis: massa tekan uretra. Dinamis: otot polos, reseptor alfa-1, dasar penghambat alfa.</li>
+      </ul></div>
+      <div class="leaf case"><h4>Pasien pemicu</h4><ul>
+        <li>Prostat 72 mL, IPP 8 mm, residu 120 mL, dinding buli tebal, PSA 3,2 ng/mL.</li>
+        <li>Tanpa poliuria di catatan berkemih.</li>
+        <li>BPO paling mungkin. Storage dan nokturia sekunder akibat obstruksi kronik.</li>
+      </ul></div>
+    </article>
+
+    <article class="branch b-fr">
+      <h3>Faktor risiko</h3>
+      <div class="leaf"><h4>Tidak dapat dimodifikasi</h4><ul>
+        <li>Usia: paling kuat.</li>
+        <li>Hormonal: testosteron bioavailabel tinggi (genetik) terkait BPH. DHT intraprostat pendorong utama.</li>
+      </ul></div>
+      <div class="leaf"><h4>Dapat dimodifikasi (Mendelian randomization)</h4><ul>
+        <li>Data UK Biobank dan FinnGen.</li>
+        <li>Lingkar pinggang OR 1,24. Per 1 SD risiko naik 24%.</li>
+        <li>Lingkar pinggang disesuaikan IMT OR 1,26. IMT OR 1,08.</li>
+        <li>Sedenter OR 1,31, risiko naik 31%.</li>
+        <li>Indeks merokok seumur hidup OR 1,25.</li>
+        <li>Tidak bermakna: inisiasi merokok, rokok per hari, alkohol, komposisi diet.</li>
+        <li>Tekanan darah diastolik kausal. Sindrom metabolik utuh, trigliserida, HDL, glukosa puasa tidak.</li>
+      </ul></div>
+      <div class="leaf"><h4>Lain</h4><ul>
+        <li>Aktivitas fisik cenderung protektif (19 studi). Belum konsisten.</li>
+        <li>Testosteron rendah: inflamasi, stres oksidatif, disfungsi vaskular.</li>
+        <li>Sindrom metabolik plus hipogonadisme plus gangguan tidur: LUTS lebih berat.</li>
+        <li>Hipertensi, gagal jantung, PGK, sindrom metabolik, DM perberat nokturia.</li>
+      </ul></div>
+      <div class="leaf case"><h4>Pasien pemicu</h4><ul>
+        <li>Ada: usia 71 tahun, faktor hormonal, hipertensi (TD 148/82 mmHg, amlodipin, belum target).</li>
+        <li>Tidak ada: DM (GDS 118 mg/dL), tanda inflamasi prostat.</li>
+        <li>Belum ada data: lingkar pinggang, IMT, aktivitas fisik.</li>
+        <li>Amlodipin: catat di peninjauan obat.</li>
+      </ul></div>
+    </article>
+  </div>
+</section>
+
+<section class="outro gutter" aria-labelledby="outroTitle">
+  <h2 id="outroTitle">Referensi</h2>
+  <ol class="refs">
+    <li><span>Carolina Ochoa D, Diéguez L, Bueno P, Gammie A, Cotterill N, Tarcan T, et al. Aligning terminology and assessment in male lower urinary tract symptoms: a comparison of guideline perspectives. Eur Urol Focus. 2026;12(4):688-94.</span></li>
+    <li><span>European Association of Urology. EAU guidelines on the management of non-neurogenic male lower urinary tract symptoms (LUTS). Edn. presented at the EAU Annual Congress London 2026. Arnhem: EAU Guidelines Office; 2026.</span></li>
+    <li><span>World Health Organization. Ageing and health [Internet]. Geneva: World Health Organization; 2025 Oct 1 [cited 2026 Oct 25]. Available from: <a href="https://www.who.int/news-room/fact-sheets/detail/ageing-and-health" target="_blank" rel="noopener">https://www.who.int/news-room/fact-sheets/detail/ageing-and-health</a></span></li>
+    <li><span>GBD 2019 Benign Prostatic Hyperplasia Collaborators. The global, regional, and national burden of benign prostatic hyperplasia in 204 countries and territories from 2000 to 2019: a systematic analysis for the Global Burden of Disease Study 2019. Lancet Healthy Longev. 2022;3(11):e754-76.</span></li>
+    <li><span>Chen Y, Li Y, Li L, Wang M, Lv Z, Liu S, et al. Global, regional, and national lifetime risks of developing benign prostatic hyperplasia in men aged over 40: a population-based cross-sectional study from 1990 to 2021. Trop Med Health. 2025;53(1):93.</span></li>
+    <li><span>Krismanuel H, Tjhin P. Examining the effectiveness of prostatic hyperplasia education on the level of participant's knowledge and awareness. PLoS One. 2025;20(6):e0325653.</span></li>
+    <li><span>Orlando AP, Maciejko LA, Lerner LB. Nocturia in men: is the prostate really to blame? Urol Clin North Am. 2025;52(4):581-94.</span></li>
+    <li><span>Hajebrahimi S, Gomes CM, Farhadi F, Khan HS, Sadeghi-Bazarghani H, Mourad S, et al. Population-based survey of urinary incontinence, overactive bladder, and other lower urinary tract symptoms in five developing countries: results of the BEBIC study. Neurourol Urodyn. 2025;44(2):294-304.</span></li>
+    <li><span>Getaneh FW, Sussman RD, Iglesia CB. Nocturia: evaluation and management. Am Fam Physician. 2025;111(6):515-23.</span></li>
+    <li><span>Chang TL, Kuo HC. Nocturia, nocturnal polyuria, and nocturnal enuresis in adults: what we know and what we do not know. Tzu Chi Med J. 2024;36(4):370-6.</span></li>
+    <li><span>Zhang L, Cai N, Mo L, Tian X, Liu H, Yu B. Global prevalence of overactive bladder: a systematic review and meta-analysis. Int Urogynecol J. 2025;36(8):1547-66.</span></li>
+    <li><span>Ye Z, Wang J, Xiao Y, Luo J, Xu L, Chen Z. Global burden of benign prostatic hyperplasia in males aged 60-90 years from 1990 to 2019: results from the global burden of disease study 2019. BMC Urol. 2024;24(1):193.</span></li>
+    <li><span>Cavanaugh D, Urbanucci A, Mohamed NE, Tewari AK, Figueiro M, Kyprianou N. Link between circadian rhythm and benign prostatic hyperplasia (BPH)/lower urinary tract symptoms (LUTS). Prostate. 2024;84(5):417-25.</span></li>
+    <li><span>Gill BC, Rosenberg MT, Kaplan SA, Lerner LB. Management of persistent storage symptoms and overactive bladder in men diagnosed with benign prostatic hyperplasia: a narrative review. Adv Ther. 2026;43(9):3765-85.</span></li>
+    <li><span>Calvillo-Ramirez A, Esparza-Miranda LA, Casas-Huesca AP, Gutierrez HR, Hinojosa-Gonzalez DE, Khalil M, et al. Clinical outcomes of benign prostatic hyperplasia surgery in men with detrusor underactivity versus normal contractility: a systematic review and meta-analysis. Int Urol Nephrol. 2026;58(10):4015-25.</span></li>
+    <li><span>Lebdai S, Doizi S, Kassab D, Gas J, Pradere B, Robert G, et al. Pre-therapeutical assessment of lower urinary tract symptoms in adult men: systematic review and clinical practice guidelines. Fr J Urol. 2025;35(3):102846.</span></li>
+    <li><span>Xu G, Dai G, Huang Z, Guan Q, Du C, Xu X. The etiology and pathogenesis of benign prostatic hyperplasia: the roles of sex hormones and anatomy. Res Rep Urol. 2024;16:205-14.</span></li>
+    <li><span>Lin L, Wang W, Xiao K, Guo X, Zhou L. Genetically elevated bioavailable testosterone level was associated with the occurrence of benign prostatic hyperplasia. J Endocrinol Invest. 2023;46(10):2095-102.</span></li>
+    <li><span>Hu S, Liu G, Kale O, Zhu W, Xu Y, Keller P, et al. Antagonism of prostate α1-adrenoceptors by verapamil in human prostate smooth muscle contraction. J Pharmacol Exp Ther. 2025;392(7):103603.</span></li>
+    <li><span>Wang YB, Yang L, Deng YQ, Yan SY, Luo LS, Chen P, et al. Causal relationship between obesity, lifestyle factors and risk of benign prostatic hyperplasia: a univariable and multivariable Mendelian randomization study. J Transl Med. 2022;20(1):495.</span></li>
+    <li><span>Lv K, Yang G, Wu Y, Xia X, Hao X, Pang A, et al. The causal effect of metabolic syndrome and its components on benign prostatic hyperplasia: a univariable and multivariable Mendelian randomization study. Prostate. 2023;83(14):1358-64.</span></li>
+    <li><span>Branco F, Rocha-Rodrigues S, Ribal MJ, Ribeiro R. Exercise and physical activity as modifiable risk factors for benign prostatic hyperplasia: an update. Curr Urol Rep. 2026;27(1).</span></li>
+    <li><span>O'Mahony CJ, Arshad MA, Norton SM. Testosterone and lower urinary tract symptoms: a narrative review. Curr Urol Rep. 2025;26(1):75.</span></li>
+  </ol>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+(function () {
+  var DUR = 160;
+  // Tiga potongan hasil stream copy dari video asli (tanpa encode ulang)
+  var SEGS = [
+    { src: "video/luts-bph-0.mp4", start: 0, dur: 50, bytes: 9134398 },
+    { src: "video/luts-bph-1.mp4", start: 50, dur: 58.333333, bytes: 9708860 },
+    { src: "video/luts-bph-2.mp4", start: 108.333333, dur: 51.666667, bytes: 10754301 }
+  ];
+  var CHAPTERS = [
+    { start: 0,   title: "Definisi LUTS", text: "Kumpulan gejala pengisian, pengosongan, dan pascamiksi, bukan diagnosis. Bebannya naik seiring populasi menua." },
+    { start: 16,  title: "Kasus pemicu", text: "Laki-laki 71 tahun, IPSS 22, nokturia 3 sampai 4 kali per malam, volume prostat 72 mL, residu pascaberkemih 120 mL." },
+    { start: 24,  title: "Klasifikasi dan derajat", text: "Gejala dibagi menurut fase berkemih. IPSS menilai derajat LUTS, dan nokturia punya empat mekanisme." },
+    { start: 40,  title: "Epidemiologi", text: "Prevalensi LUTS dan BPH menurut usia, serta posisi Indonesia dibandingkan dunia." },
+    { start: 80,  title: "Etiologi dan evaluasi", text: "LUTS pada laki-laki bersifat multifaktorial dan sering tidak berhubungan dengan prostat." },
+    { start: 104, title: "Patogenesis BPH", text: "Jalur pembesaran prostat, komponen obstruksi statis dan dinamis, serta perubahan prostat seiring usia." },
+    { start: 136, title: "Faktor risiko", text: "Faktor yang dapat dan tidak dapat dimodifikasi, lalu dipetakan pada pasien pemicu." }
+  ];
+  CHAPTERS.forEach(function (c, i) { c.end = i < CHAPTERS.length - 1 ? CHAPTERS[i + 1].start : DUR; });
+
+  function fmt(t) { t = Math.max(0, Math.round(t)); return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); }
+  function chapterAt(t) { for (var i = CHAPTERS.length - 1; i >= 0; i--) if (t >= CHAPTERS[i].start) return i; return 0; }
+
+  // ---------- Bangun UI bab ----------
+  var capsEl = document.getElementById("captions");
+  var track = document.getElementById("railTrack");
+  var labels = document.getElementById("railLabels");
+  var caps = [], chaps = [], fills = [], labelEls = [];
+  CHAPTERS.forEach(function (c, i) {
+    var cap = document.createElement("article");
+    cap.className = "cap";
+    cap.innerHTML = "<h3></h3><p></p>";
+    cap.querySelector("h3").textContent = c.title;
+    cap.querySelector("p").textContent = c.text;
+    if (i > 0) cap.setAttribute("aria-hidden", "true");
+    capsEl.appendChild(cap); caps.push(cap);
+
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "chap";
+    b.style.setProperty("--w", c.end - c.start);
+    b.setAttribute("aria-label", "Bab " + (i + 1) + ": " + c.title + ", mulai " + fmt(c.start));
+    b.innerHTML = '<span class="fill"></span>';
+    b.addEventListener("click", function () { jumpTo(c.start + 0.05); });
+    track.appendChild(b); chaps.push(b); fills.push(b.querySelector(".fill"));
+
+    var l = document.createElement("span");
+    l.style.setProperty("--w", c.end - c.start);
+    l.textContent = c.title;
+    labels.appendChild(l); labelEls.push(l);
+  });
+
+  // ---------- Pemutar: video mengejar posisi gulir ----------
+  var vids = Array.prototype.slice.call(document.querySelectorAll(".screen video"));
+  var ready = [false, false, false], failed = [false, false, false];
+  var loadingEl = document.getElementById("loading"), loadText = document.getElementById("loadText"), loadBar = document.getElementById("loadBar");
+  var target = 0, active = 0;
+  vids[0].classList.add("on");
+
+  function segAt(t) { for (var i = SEGS.length - 1; i >= 0; i--) if (t >= SEGS[i].start - 1e-6) return i; return 0; }
+  function localTime(i, t) { return Math.min(Math.max(t - SEGS[i].start, 0), SEGS[i].dur - 0.04); }
+
+  function tick() {
+    var i = segAt(target);
+    if (i !== active) {
+      vids[active].pause();
+      vids[active].classList.remove("on");
+      active = i;
+      vids[i].classList.add("on");
+      if (ready[i]) vids[i].currentTime = localTime(i, target);
+    }
+    var v = vids[active];
+    if (ready[active]) {
+      var local = localTime(active, target), diff = local - v.currentTime;
+      if (diff > 0.035 && diff < 2.5) {
+        // Maju: putar cepat sampai menyusul gulir, jauh lebih halus daripada seek per frame
+        var rate = Math.min(8, Math.max(0.5, diff * 3));
+        if (Math.abs(v.playbackRate - rate) > 0.05) v.playbackRate = rate;
+        if (v.paused) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+      } else if (Math.abs(diff) <= 0.035) {
+        if (!v.paused) v.pause();
+      } else {
+        // Mundur atau lompatan jauh: seek, satu per satu
+        if (!v.paused) v.pause();
+        if (!v.seeking) v.currentTime = local;
+      }
+    }
+    updateLoading();
+    requestAnimationFrame(tick);
+  }
+
+  var loadedBytes = [0, 0, 0], totalBytes = SEGS.reduce(function (a, s) { return a + s.bytes; }, 0);
+  function updateLoading() {
+    if (failed[active]) return;
+    var show = !ready[active];
+    if (loadingEl.hidden === !show) return;
+    loadingEl.hidden = !show;
+  }
+  function setProgress() {
+    var sum = loadedBytes.reduce(function (a, b) { return a + b; }, 0);
+    var pct = Math.min(100, Math.round(sum / totalBytes * 100));
+    loadText.textContent = "Memuat video " + pct + "%";
+    loadBar.style.transform = "scaleX(" + (pct / 100) + ")";
+  }
+
+  function attach(i, url) {
+    return new Promise(function (resolve) {
+      var v = vids[i];
+      var done = function () {
+        ready[i] = true;
+        if (i === active) v.currentTime = localTime(i, target);
+        resolve();
+      };
+      v.addEventListener("loadeddata", done, { once: true });
+      v.addEventListener("error", function () {
+        failed[i] = true;
+        if (i === active) { loadingEl.hidden = false; loadingEl.classList.add("error"); loadText.textContent = "Bagian " + (i + 1) + " gagal dimuat. Muat ulang halaman."; }
+        resolve();
+      }, { once: true });
+      v.preload = "auto";
+      v.src = url;
+      v.load();
+    });
+  }
+
+  async function fetchSeg(i) {
+    var s = SEGS[i];
+    try {
+      var res = await fetch(s.src);
+      if (!res.ok || !res.body) throw new Error("http");
+      var reader = res.body.getReader(), chunks = [];
+      for (;;) {
+        var r = await reader.read();
+        if (r.done) break;
+        chunks.push(r.value); loadedBytes[i] += r.value.length; setProgress();
+      }
+      var url = URL.createObjectURL(new Blob(chunks, { type: "video/mp4" }));
+      await attach(i, url);
+    } catch (e) {
+      // Cadangan: biarkan browser streaming langsung dari berkasnya
+      loadedBytes[i] = s.bytes; setProgress();
+      await attach(i, s.src);
+    }
+  }
+
+  (async function loadAll() {
+    // Bagian yang sedang ditonton dimuat lebih dulu
+    var order = [0, 1, 2].sort(function (a, b) { return (a === segAt(target) ? -1 : 0) - (b === segAt(target) ? -1 : 0); });
+    for (var k = 0; k < order.length; k++) await fetchSeg(order[k]);
+  })();
+
+  requestAnimationFrame(tick);
+
+  // ---------- GSAP: satu timeline = 160 detik video ----------
+  var lastChap = -1;
+  function paintUI(t) {
+    target = t;
+    var c = chapterAt(t);
+    if (c !== lastChap) {
+      chaps.forEach(function (b, i) { b.classList.toggle("active", i === c); b.setAttribute("aria-current", i === c ? "step" : "false"); });
+      labelEls.forEach(function (l, i) { l.classList.toggle("active", i === c); });
+      caps.forEach(function (el, i) { if (i === c) el.removeAttribute("aria-hidden"); else el.setAttribute("aria-hidden", "true"); });
+      lastChap = c;
+    }
+  }
+
+  var st = null;
+  function jumpTo(t) {
+    if (!st) return;
+    var y = st.start + (t / DUR) * (st.end - st.start);
+    window.scrollTo({ top: Math.ceil(y), behavior: "auto" });
+  }
+
+  if (!window.gsap || !window.ScrollTrigger) {
+    // Tanpa GSAP: tetap bisa ditonton dengan kontrol bawaan
+    vids.forEach(function (v) { v.controls = true; });
+    loadText.textContent = "Animasi gulir tidak termuat. Video tetap bisa diputar.";
+    paintUI(0);
+    return;
+  }
+
+  gsap.registerPlugin(ScrollTrigger);
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var playhead = { t: 0 };
+
+  var tl = gsap.timeline({
+    defaults: { ease: "none" },
+    scrollTrigger: {
+      id: "film",
+      trigger: "#film",
+      start: "top top",
+      end: function () { return "+=" + Math.round(window.innerHeight * 16); },
+      pin: true,
+      scrub: 0.5,
+      invalidateOnRefresh: true
+    }
+  });
+
+  // Playhead video: satu detik timeline = satu detik video
+  tl.to(playhead, { t: DUR, duration: DUR, onUpdate: function () { paintUI(playhead.t); } }, 0);
+
+  CHAPTERS.forEach(function (c, i) {
+    tl.addLabel("bab" + (i + 1), c.start);
+    // Isi rel per bab
+    tl.fromTo(fills[i], { scaleX: 0 }, { scaleX: 1, duration: c.end - c.start }, "bab" + (i + 1));
+    // Pergantian keterangan bab, sedikit sebelum slide berganti
+    if (i > 0) {
+      var y = reduce ? 0 : 14;
+      tl.to(caps[i - 1], { autoAlpha: 0, y: -y, duration: 0.8, ease: "power2.in" }, "bab" + (i + 1) + "-=0.8");
+      tl.fromTo(caps[i], { autoAlpha: 0, y: y }, { autoAlpha: 1, y: 0, duration: 0.8, ease: "power2.out" }, "bab" + (i + 1));
+    }
+  });
+
+  st = tl.scrollTrigger;
+  paintUI(0);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { ScrollTrigger.refresh(); });
+})();
+</script>
+<script>
+(function () {
+  // Garis mindmap: dari sisi simpul inti ke tepi atas tiap cabang, digambar ulang saat ukuran berubah
+  var mind = document.getElementById("mind"), svg = document.getElementById("mindLines"), core = document.getElementById("mindCore");
+  var branches = Array.prototype.slice.call(mind.querySelectorAll(".branch"));
+  var NS = "http://www.w3.org/2000/svg";
+  var paths = branches.map(function () { var p = document.createElementNS(NS, "path"); svg.appendChild(p); return p; });
+  var drawn = 1;
+
+  function layout() {
+    if (getComputedStyle(svg).display === "none") return;
+    var box = mind.getBoundingClientRect(), c = core.getBoundingClientRect();
+    svg.setAttribute("viewBox", "0 0 " + box.width + " " + box.height);
+    var cy = c.top + c.height / 2 - box.top;
+    branches.forEach(function (b, i) {
+      var r = b.getBoundingClientRect();
+      var left = r.left + r.width / 2 < c.left + c.width / 2;
+      var x1 = (left ? c.left : c.right) - box.left;
+      var x2 = (left ? r.right : r.left) - box.left;
+      var y2 = r.top - box.top + 34;
+      var mx = (x1 + x2) / 2;
+      paths[i].setAttribute("d", "M" + x1 + " " + cy + " C" + mx + " " + cy + " " + mx + " " + y2 + " " + x2 + " " + y2);
+      var len = paths[i].getTotalLength();
+      paths[i].style.strokeDasharray = len;
+      paths[i].style.strokeDashoffset = len * (1 - drawn);
+    });
+  }
+  layout();
+  if (window.ResizeObserver) new ResizeObserver(layout).observe(mind);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+
+  if (!window.gsap || !window.ScrollTrigger || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  // Cabang "tumbuh" dari inti saat bagian mindmap masuk layar
+  var prog = { v: 0 };
+  drawn = 0; layout();
+  gsap.timeline({
+    defaults: { ease: "none" },
+    scrollTrigger: { trigger: "#mind", start: "top 85%", end: "top 35%", scrub: 0.6 }
+  }).to(prog, { v: 1, duration: 1, onUpdate: function () { drawn = prog.v; layout(); } }, 0);
+})();
+</script>
+
+</body>
+</html>
