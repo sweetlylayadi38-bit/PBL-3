@@ -53,7 +53,7 @@ body {
 /* ---------- Hero ---------- */
 .hero {
   position: relative; z-index: 1;
-  min-height: 100dvh; box-sizing: border-box;
+  min-height: 100vh; min-height: 100svh; box-sizing: border-box;
   display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
   align-items: center; gap: clamp(32px, 6vw, 96px);
   max-width: 1240px; margin: 0 auto;
@@ -97,7 +97,8 @@ h1 em, h2 em { font-style: italic; color: var(--rose-soft); }
 @keyframes trace { 0% { stroke-dashoffset: 40; } 35%, 100% { stroke-dashoffset: 0; } }
 
 /* ---------- Panggung video (di-pin oleh ScrollTrigger) ---------- */
-.film { position: relative; z-index: 1; height: 100dvh; box-sizing: border-box; }
+/* svh, bukan dvh: tinggi tetap saat address bar HP muncul/hilang, jadi titik pin ScrollTrigger tidak bergeser */
+.film { position: relative; z-index: 1; height: 100vh; height: 100svh; box-sizing: border-box; }
 .film-inner {
   height: 100%; box-sizing: border-box; max-width: 1440px; margin: 0 auto;
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
@@ -106,7 +107,7 @@ h1 em, h2 em { font-style: italic; color: var(--rose-soft); }
   padding-block: clamp(16px, 4vh, 40px);
 }
 .screen {
-  position: relative; width: 100%; max-width: calc((100dvh - 170px) * 16 / 9); justify-self: center;
+  position: relative; width: 100%; max-width: calc((100vh - 170px) * 16 / 9); max-width: calc((100svh - 170px) * 16 / 9); justify-self: center;
   aspect-ratio: 16 / 9; box-sizing: border-box; background: #fff;
   border: 10px solid var(--paper); border-radius: 26px; overflow: hidden;
   box-shadow: 0 34px 70px -24px var(--shadow), 0 10px 20px -10px var(--shadow);
@@ -209,6 +210,17 @@ h1 em, h2 em { font-style: italic; color: var(--rose-soft); }
   .card { border-width: 12px; border-radius: 32px; }
   .copy { max-width: none; }
   .film-inner { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; align-content: center; gap: 18px; }
-  .screen { max-width: 100%; border-width: 6px; border-radius: 16px; }
+  .screen { max-width: min(100%, calc((100svh - 230px) * 16 / 9)); border-width: 6px; border-radius: 16px; }
+  .chap { min-width: 24px; }
   .rail-labels { display: none; }
+}
+
+/* HP mendatar (tinggi kecil): tetap dua kolom supaya video tidak terpotong dan keterangan tidak menimpa */
+@media (max-width: 960px) and (max-height: 500px) and (orientation: landscape) {
+  .film-inner { grid-template-columns: minmax(0, 1fr) minmax(170px, 32%); grid-template-rows: minmax(0, 1fr) auto; gap: 10px 16px; padding-block: 10px; align-content: stretch; }
+  .screen { max-width: calc((100svh - 80px) * 16 / 9); border-width: 5px; border-radius: 14px; }
+  .notes { gap: 8px; }
+  .cap h3 { font-size: 1.1rem; }
+  .cap p { font-size: .85rem; line-height: 1.45; }
+  .rail-track { height: 26px; }
 }
