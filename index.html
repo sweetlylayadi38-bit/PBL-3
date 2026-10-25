@@ -6,7 +6,6 @@
 <title>Animasi LUTS dan BPH</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,800;1,800&display=swap">
 <style>
 :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -125,10 +124,9 @@ h1 em, h2 em { font-style: italic; color: var(--rose-soft); }
 }
 .screen video, .screen .poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
 .screen .poster { background: #fff; }
-/* Video transparan sampai punya data; poster slide di bawahnya tetap terlihat */
+/* Video transparan sampai siap; poster slide di bawahnya tetap terlihat */
 .screen video { opacity: 0; background: transparent; }
 .screen video.on { opacity: 1; }
-.screen.wait video { opacity: 0; }
 .loading {
   position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
   display: grid; gap: 8px; justify-items: center; width: min(78%, 320px);
@@ -136,9 +134,8 @@ h1 em, h2 em { font-style: italic; color: var(--rose-soft); }
   font-size: .88rem; font-weight: 600; font-variant-numeric: tabular-nums; text-align: center;
 }
 .loading .bar { width: 100%; height: 4px; border-radius: 4px; background: rgb(251 230 230 / .25); overflow: hidden; }
-.loading .bar i { display: block; height: 100%; width: 40%; background: var(--ureter); border-radius: 4px; }
-@media (prefers-reduced-motion: no-preference) { .loading .bar i { animation: load-slide 1.1s cubic-bezier(0.77, 0, 0.175, 1) infinite; } }
-@keyframes load-slide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+.loading .bar i { display: block; height: 100%; width: 0; background: var(--ureter); border-radius: 4px; transition: width .2s linear; }
+.loading .pick { font-size: .78rem; font-weight: 400; cursor: pointer; }
 .loading.error { background: var(--crimson); }
 
 .notes { display: grid; gap: 14px; align-content: center; min-width: 0; }
@@ -279,12 +276,10 @@ h1 em, h2 em { font-style: italic; color: var(--rose-soft); }
   <div class="film-inner gutter">
     <div class="screen" id="screen">
       <img class="poster" id="poster" src="video/frames/s00.webp" alt="" width="1280" height="720">
-      <video muted playsinline preload="metadata" aria-label="Animasi LUTS dan BPH bagian 1"></video>
-      <video muted playsinline preload="metadata" aria-label="Animasi LUTS dan BPH bagian 2"></video>
-      <video muted playsinline preload="metadata" aria-label="Animasi LUTS dan BPH bagian 3"></video>
-      <div class="loading" id="loading" role="status" aria-live="polite" hidden>
-        <span id="loadText">Memuat video</span>
-        <span class="bar"><i></i></span>
+      <div class="loading" id="loading" role="status">
+        <span id="loadText" aria-live="polite">Memuat video</span>
+        <span class="bar"><i id="loadBar"></i></span>
+        <label class="pick">Ada <b>luts-bph.mp4</b> di perangkat? <u>Pakai berkas itu</u><input type="file" accept="video/mp4,video/*" id="pick" hidden></label>
       </div>
     </div>
 
@@ -473,17 +468,13 @@ h1 em, h2 em { font-style: italic; color: var(--rose-soft); }
     <li><span>O'Mahony CJ, Arshad MA, Norton SM. Testosterone and lower urinary tract symptoms: a narrative review. Curr Urol Rep. 2025;26(1):75.</span></li>
   </ol>
 </section>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="js/gsap.min.js"></script>
+<script src="js/ScrollTrigger.min.js"></script>
 <script>
 (function () {
   var DUR = 160, SLIDE_LEN = 8, SLIDES = 20; // poster: 1 gambar per slide 8 detik
-  // Tiga potongan hasil stream copy dari video asli (tanpa encode ulang, kualitas sama)
-  var SEGS = [
-    { src: "video/luts-bph-0.mp4", start: 0, dur: 50 },
-    { src: "video/luts-bph-1.mp4", start: 50, dur: 58.333333 },
-    { src: "video/luts-bph-2.mp4", start: 108.333333, dur: 51.666667 }
-  ];
+  // 1080p, keyframe tiap 1 detik: seek ke titik mana pun cukup decode <= 30 frame
+  var SRC = "video/luts-bph.mp4";
   var CHAPTERS = [
     { start: 0,   title: "Definisi LUTS", text: "Kumpulan gejala pengisian, pengosongan, dan pascamiksi, bukan diagnosis. Bebannya naik seiring populasi menua." },
     { start: 16,  title: "Kasus pemicu", text: "Laki-laki 71 tahun, IPSS 22, nokturia 3 sampai 4 kali per malam, volume prostat 72 mL, residu pascaberkemih 120 mL." },
@@ -526,125 +517,97 @@ h1 em, h2 em { font-style: italic; color: var(--rose-soft); }
     labels.appendChild(l); labelEls.push(l);
   });
 
-  // ---------- Pemutar: video mengejar posisi gulir ----------
-  // Video di-stream langsung (HTTP Range, moov di awal berkas): frame pertama muncul
-  // setelah ~1 GOP terunduh, bukan setelah seluruh bagian. Selama belum ada data,
-  // poster slide yang sesuai tampil di bawah video.
+  // ---------- Pemutar: satu video, diunduh penuh sekali ke memori ----------
+  // Setelah berkas utuh ada di memori (blob), menggulir tidak pernah menunggu jaringan lagi:
+  // tiap posisi gulir hanya seek + decode lokal. Selama mengunduh, poster slide yang sesuai tampil.
   var screen = document.getElementById("screen"), poster = document.getElementById("poster");
   var loadingEl = document.getElementById("loading"), loadText = document.getElementById("loadText");
-  var vids = Array.prototype.slice.call(document.querySelectorAll(".screen video"));
-  var live = vids.map(function () { return false; }), bad = vids.map(function () { return false; });
+  var loadBar = document.getElementById("loadBar"), pick = document.getElementById("pick");
+  var v = null; // video yang sedang tampil
   var playhead = { t: 0 }; // diisi timeline GSAP; tick membacanya tiap frame
-  var loadAt = Infinity; addEventListener("load", function () { loadAt = performance.now(); });
-  var target = 0, active = -1, activeSince = 0, noPlay = false, seekSince = 0, bigSeek = false, shownSlide = 0, manual = false, snapUntil = 0;
+  var ready = false, picked = false, shownSlide = 0, manual = false, snapUntil = 0;
+  var ctrl = window.AbortController ? new AbortController() : null;
 
-  function segAt(t) { for (var i = SEGS.length - 1; i >= 0; i--) if (t >= SEGS[i].start - 1e-6) return i; return 0; }
-  function localTime(i, t) { return Math.min(Math.max(t - SEGS[i].start, 0), SEGS[i].dur - 0.04); }
-
-  vids.forEach(function (v, i) {
-    v.addEventListener("loadeddata", function () { live[i] = true; });
-    // ponytail: bagian lain diunduh penuh satu per satu setelah bagian aktif siap, tanpa antrean buatan sendiri
-    v.addEventListener("canplaythrough", function () {
-      var next = vids.filter(function (w) { return w.preload !== "auto"; })
-        .sort(function (a, b) { return Math.abs(vids.indexOf(a) - active) - Math.abs(vids.indexOf(b) - active); })[0];
-      if (next) { load(vids.indexOf(next)); next.preload = "auto"; } // bagian terdekat dengan yang ditonton lebih dulu
+  // Muat sumber ke elemen video baru; elemen lama tetap tampil sampai yang baru sudah di frame yang benar,
+  // jadi pergantian stream -> memori tidak berkedip.
+  function use(url) {
+    var w = document.createElement("video");
+    w.muted = true; w.playsInline = true; w.preload = "auto"; w.controls = manual;
+    w.setAttribute("aria-label", "Animasi LUTS dan BPH");
+    w.addEventListener("loadedmetadata", function () {
+      // iOS baru menggambar frame setelah play() pertama; video bisu boleh diputar otomatis
+      var p = w.play(); if (p && p.then) p.then(function () { w.pause(); }, function () {});
     });
-    v.addEventListener("error", function () { bad[i] = true; });
+    w.addEventListener("loadeddata", function () {
+      w.addEventListener("seeked", function () {
+        if (v) { v.removeAttribute("src"); v.load(); v.remove(); } // hentikan unduhan elemen lama
+        v = w; ready = true; w.classList.add("on"); loadingEl.hidden = true;
+      }, { once: true });
+      w.currentTime = Math.min(playhead.t, w.duration - 0.04);
+    }, { once: true });
+    w.addEventListener("error", function () { if (w.getAttribute("src") && !v) fail("Video gagal dimuat. Muat ulang halaman."); });
+    w.src = url;
+    screen.insertBefore(w, loadingEl);
+  }
+
+  function fail(msg) { loadText.textContent = msg; loadingEl.classList.add("error"); loadingEl.hidden = false; }
+  function mb(n) { return (n / 1048576).toFixed(0); }
+
+  // Pakai berkas video dari perangkat sendiri: tanpa unduhan sama sekali
+  pick.addEventListener("change", function () {
+    var f = pick.files[0]; if (!f) return;
+    picked = true; if (ctrl) ctrl.abort();
+    loadingEl.classList.remove("error");
+    use(URL.createObjectURL(f));
   });
 
-  // src baru dipasang saat bagian itu dibutuhkan, supaya bagian yang ditonton tidak berebut bandwidth
-  // dengan bagian lain sejak awal
-  function load(i) {
-    if (vids[i].getAttribute("src")) return;
-    vids[i].preload = "metadata";
-    vids[i].src = SEGS[i].src;
-  }
-
-  // Gestur pengguna bisa membuka kembali izin play() setelah sempat diblokir
-  ["pointerdown", "keydown"].forEach(function (ev) { addEventListener(ev, function () { noPlay = false; }, { passive: true }); });
-
-  function activate(i, now) {
-    if (active >= 0) { vids[active].pause(); vids[active].classList.remove("on"); }
-    active = i; activeSince = now;
-    vids[i].classList.add("on");
-  }
-
-  // Parkir tetangga langsung di tepi batas, supaya lintas batas langsung menampilkan frame yang benar.
-  // Hanya dijalankan saat bagian aktif sudah tampil dan diam, agar tidak berebut bandwidth dengannya.
-  function parkNeighbours(i) {
-    [i - 1, i + 1].forEach(function (j) {
-      var w = vids[j];
-      if (!w || w.readyState < 1 || w.seeking) return;
-      var edge = j < i ? SEGS[j].dur - 0.04 : 0;
-      if (Math.abs(w.currentTime - edge) > 0.1) w.currentTime = edge;
-    });
-  }
-
-  function play(v) {
-    var p = v.play();
-    // NotAllowedError = autoplay diblokir (Low Power Mode iOS, penghemat data): beralih ke seek saja.
-    // AbortError karena pause() di tengah play() itu normal, abaikan.
-    if (p && p.catch) p.catch(function (e) { if (e && e.name === "NotAllowedError") noPlay = true; });
-  }
+  // 1) Stream langsung supaya animasi bisa digulir sejak awal (keyframe rapat: tiap seek cukup unduh potongan kecil).
+  // 2) Sambil itu unduh utuh ke memori; begitu selesai, ganti ke salinan memori: setelahnya tanpa jaringan sama sekali.
+  use(SRC);
+  fetch(SRC, ctrl ? { signal: ctrl.signal } : {}).then(function (r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    if (!r.body || !r.body.getReader) return r.blob();
+    var total = +r.headers.get("Content-Length") || 0, got = 0, parts = [], rd = r.body.getReader();
+    return (function pump() {
+      return rd.read().then(function (x) {
+        if (x.done) return new Blob(parts, { type: "video/mp4" });
+        parts.push(x.value); got += x.value.length;
+        loadText.textContent = total ? "Memuat video " + Math.floor(got / total * 100) + "% (" + mb(got) + "/" + mb(total) + " MB)" : "Memuat video " + mb(got) + " MB";
+        if (total) loadBar.style.width = (got / total * 100) + "%";
+        return pump();
+      });
+    })();
+  }).then(function (blob) {
+    if (!picked) use(URL.createObjectURL(blob));
+  }).catch(function () {}); // file:// atau fetch diblokir: tetap pakai stream dari langkah 1
 
   function showSlide(s) {
-    // Poster baru dipasang setelah selesai di-decode; kalau lebih dari 200 ms, poster lama disembunyikan
-    // supaya tidak tampil slide yang salah terlalu lama.
+    // Poster baru dipasang setelah selesai di-decode, supaya tidak berkedip kosong
     shownSlide = s;
     var url = "video/frames/s" + String(s).padStart(2, "0") + ".webp", img = new Image();
-    var hide = setTimeout(function () { if (shownSlide === s) poster.hidden = true; }, 200);
     img.src = url;
     (img.decode ? img.decode() : Promise.resolve()).catch(function () {}).then(function () {
-      clearTimeout(hide);
-      if (shownSlide === s) { poster.src = url; poster.hidden = false; }
+      if (shownSlide === s) poster.src = url;
     });
   }
 
   function tick(now) {
     if (manual) return;
-    // Detik-detik awal (mis. scroll dipulihkan saat reload) dan lompat lewat rel bab: selesaikan tween scrub seketika,
-    // supaya playhead tidak menyapu dari 0 dan memicu seek/unduhan di bagian yang hanya dilewati.
+    // Detik awal (scroll dipulihkan saat reload) dan lompat lewat rel bab: selesaikan tween scrub seketika
     if (st && (now < 3000 || now < snapUntil)) { var tw = st.getTween(); if (tw && tw.isActive()) tw.progress(1); }
     // Baca langsung dari playhead: refresh ScrollTrigger bisa mengubah progres timeline tanpa memicu onUpdate
-    target = playhead.t;
-    paintUI(target);
-    var i = segAt(target);
-    if (i !== active) activate(i, now);
-    // Mulai memuat video 300 ms setelah halaman selesai dimuat: scroll yang dipulihkan saat reload sudah
-    // berlaku, jadi yang dimuat pertama benar-benar bagian yang ditonton (bukan bagian 1 di posisi awal)
-    if (now > loadAt + 300) load(i);
-    var v = vids[i], local = localTime(i, target), diff = local - v.currentTime;
-    // Unduh penuh hanya bagian yang benar-benar ditonton (>600 ms, dihitung setelah halaman selesai dimuat
-    // karena scroll reload baru dipulihkan sekitar saat itu), bukan yang sekadar dilewati saat gulir cepat
-    if (v.preload !== "auto" && now - Math.max(activeSince, loadAt) > 600) v.preload = "auto";
-    if (v.readyState >= 1) {
-      if (live[i] && !noPlay && !v.seeking && diff > 0.035 && diff < 2.5) {
-        // Maju sedikit: putar cepat sampai menyusul gulir, lebih halus daripada seek per frame
-        var rate = Math.min(4, Math.max(0.5, diff * 3));
-        if (Math.abs(v.playbackRate - rate) > 0.05) v.playbackRate = rate;
-        if (v.paused) play(v);
-      } else if (Math.abs(diff) <= 0.035) {
-        if (!v.paused) v.pause();
-        if (live[i]) parkNeighbours(i);
-      } else {
-        // Mundur, lompatan jauh, atau putar diblokir: seek satu per satu
-        if (!v.paused) v.pause();
-        if (!v.seeking) { bigSeek = Math.abs(diff) > 2.5; v.currentTime = local; }
-      }
-    }
-    seekSince = v.seeking ? (seekSince || now) : 0;
-    if (!v.seeking) bigSeek = false;
-    // Poster tampil bila belum ada data, saat lompatan jauh (frame lama bisa dari bab lain), atau seek lambat
-    var wait = !live[i] || (v.seeking && (bigSeek || now - seekSince > 250));
-    if (wait) {
-      var s = Math.min(SLIDES - 1, Math.floor(target / SLIDE_LEN));
+    var t = playhead.t;
+    paintUI(t);
+    if (ready) {
+      // Seek berikutnya baru dikirim setelah yang sebelumnya selesai: posisi terbaru selalu menang
+      var want = Math.min(t, v.duration - 0.04), d = Math.abs(v.currentTime - want);
+      // Gerak jauh: lompat ke keyframe terdekat (keyframe tepat di tiap detik bulat, cukup decode 1 frame);
+      // begitu gulir melambat, seek presisi ke frame yang tepat.
+      if (!v.seeking && d > 0.02) v.currentTime = d > 1 ? Math.min(Math.round(want), v.duration - 0.04) : want;
+    } else {
+      var s = Math.min(SLIDES - 1, Math.floor(t / SLIDE_LEN));
       if (s !== shownSlide) showSlide(s);
     }
-    screen.classList.toggle("wait", !!wait);
-    loadingEl.classList.toggle("error", bad[i]);
-    var msg = bad[i] ? "Bagian " + (i + 1) + " gagal dimuat. Muat ulang halaman." : "Memuat video";
-    if (loadText.textContent !== msg) loadText.textContent = msg; // aria-live: jangan diulang tiap frame
-    loadingEl.hidden = !bad[i]; // kotak hanya muncul bila gagal; saat memuat cukup poster slide
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
@@ -670,14 +633,8 @@ h1 em, h2 em { font-style: italic; color: var(--rose-soft); }
   }
 
   if (!window.gsap || !window.ScrollTrigger) {
-    // Tanpa GSAP: satu video tampil dengan kontrol bawaan, lalu berlanjut ke bagian berikutnya
-    manual = true;
-    activate(0, 0);
-    screen.classList.remove("wait"); loadingEl.hidden = true;
-    vids.forEach(function (v, i) {
-      v.controls = true; v.preload = "auto";
-      v.addEventListener("ended", function () { if (vids[i + 1]) { activate(i + 1, 0); vids[i + 1].currentTime = 0; play(vids[i + 1]); } });
-    });
+    // Tanpa GSAP: video biasa dengan kontrol bawaan
+    manual = true; if (v) v.controls = true;
     paintUI(0);
     return;
   }
