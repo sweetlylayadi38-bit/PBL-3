@@ -166,7 +166,7 @@
     loadingEl.classList.toggle("error", bad[i]);
     var msg = bad[i] ? "Bagian " + (i + 1) + " gagal dimuat. Muat ulang halaman." : "Memuat video";
     if (loadText.textContent !== msg) loadText.textContent = msg; // aria-live: jangan diulang tiap frame
-    loadingEl.hidden = !(wait || bad[i]);
+    loadingEl.hidden = !bad[i]; // kotak hanya muncul bila gagal; saat memuat cukup poster slide
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
