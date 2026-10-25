@@ -9,4 +9,4 @@ Isi halaman:
 
 Video di folder `video/` adalah video asli 1920x1080 yang dipotong menjadi tiga bagian tanpa encode ulang, jadi kualitasnya sama dengan aslinya.
 
-Buka `index.html` lewat GitHub Pages atau server lokal (misalnya `python3 -m http.server`), karena video dimuat dengan `fetch` dan tidak berjalan bila berkas dibuka langsung dari disk.
+Buka lewat GitHub Pages atau server lokal (misalnya `python3 -m http.server`); video di-stream dengan HTTP Range.
